@@ -4,7 +4,7 @@ from nnfs.datasets import spiral_data
 from layers import Dense
 from activations import ReLu, Softmax
 from losses import CategoricalCrossEntropy, ActivationSoftmaxCategoricalCrossEntropy
-from optimizers import OptimizerSDG
+from optimizers import SDG, AdaGrad, RMSProb, Adam
 
 nnfs.init()
 
@@ -15,7 +15,8 @@ activation1 = ReLu()
 dense2 = Dense(64, 3)
 
 loss_activation = ActivationSoftmaxCategoricalCrossEntropy()
-optimizer = OptimizerSDG()
+# optimizer = RMSProb(learning_rate=0.02, decay=1e-5, rho=0.999)
+optimizer = Adam(learning_rate=0.05, decay=5e-7)
 
 for epoch in range(10001):
     
@@ -31,7 +32,7 @@ for epoch in range(10001):
     
     accuracy = np.mean(predictions == y)
     if not epoch % 100:
-        print(f'epoch: {epoch}, acc: {accuracy:.3f}, loss: {loss:.3f}')
+        print(f'epoch: {epoch}, acc: {accuracy:.3f}, loss: {loss:.3f}, lr: {optimizer.current_learning_rate}')
         
     # ===== backpropagation ===== 
     loss_activation.backward_pass(loss_activation.output, y)
@@ -39,8 +40,9 @@ for epoch in range(10001):
     activation1.backward_pass(dense2.dinputs)
     dense1.backward_pass(activation1.dinputs)
 
-    optimizer.uptade_params(dense1)
-    optimizer.uptade_params(dense2)
-
+    optimizer.pre_update_params()
+    optimizer.update_params(dense1)
+    optimizer.update_params(dense2)
+    optimizer.post_update_params()
 
 
