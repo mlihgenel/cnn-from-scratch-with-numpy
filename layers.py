@@ -44,3 +44,18 @@ class Dense():
                
         # girdilerin gradyanları 
         self.dinputs = np.dot(dvalues, self.weights.T)
+        
+class Dropout():
+    def __init__(self, rate):
+        self.rate = 1 - rate 
+    
+    def forward_pass(self, inputs, training=True):
+        self.inputs = inputs
+        if not training:
+            self.output = inputs.copy()
+            return 
+        self.binary_mask = np.random.binomial(1, self.rate, size=inputs.shape) / self.rate
+        self.output = inputs * self.binary_mask
+        
+    def backward_pass(self, dvalues):
+        self.dinputs = dvalues * self.binary_mask

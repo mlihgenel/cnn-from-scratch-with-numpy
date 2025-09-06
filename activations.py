@@ -31,3 +31,13 @@ class Softmax():
             jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
             
             self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
+            
+class Sigmoid():
+    def forward_pass(self, inputs):
+        self.inputs = inputs
+        self.output = 1 / (1 + np.exp(-inputs))
+        
+    def backward_pass(self, dvalues):
+        self.dinputs = dvalues * (1 - self.output) * self.output
+        
+        
