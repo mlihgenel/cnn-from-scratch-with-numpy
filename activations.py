@@ -41,3 +41,10 @@ class Sigmoid():
         self.dinputs = dvalues * (1 - self.output) * self.output
         
         
+class Linear():
+    def forward_pass(self, inputs):
+        self.inputs = inputs
+        self.output = inputs
+        
+    def backward_pass(self, dvalues):
+        self.dinputs = dvalues.copy()

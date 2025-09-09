@@ -94,4 +94,28 @@ class ActivationSoftmaxCategoricalCrossEntropy():
         # gradyanı normalize et
         self.dinputs = self.dinputs / samples
   
+class MeanSquaredError(Loss): #L2
+    def forward_pass(self, y_pred, y_true):
+        sample_losses = np.mean((y_pred - y_true)**2, axis=1)
+        return sample_losses
+    
+    def backward_pass(self, dvalues, y_true):
+        samples = len(dvalues)
+        outputs = len(dvalues[0])
+        
+        self.dinputs = -2 * (y_true - dvalues) / outputs
+        self.dinputs = self.dinputs / samples
   
+class MeanAbsoluteError(Loss):
+    def forward_pass(self, y_pred, y_true):
+        sample_loss = np.mean(np.abs(y_pred - y_true), axis=-1)
+        return sample_loss
+    
+    def backward_loss(self, dvalues, y_true):
+        samples = len(dvalues)
+        outputs = len(dvalues[0])
+        
+        self.dinputs = np.sign(y_true - dvalues) / outputs
+        self.dinputs = self.dinputs / samples 
+        
+        
