@@ -1,7 +1,7 @@
 import numpy as np
 
 class ReLu():
-    def forward_pass(self, inputs):
+    def forward_pass(self, inputs, training):
         self.inputs = inputs
         self.output = np.maximum(0, inputs)
     
@@ -15,7 +15,7 @@ class ReLu():
         return outputs
         
 class Softmax():
-    def forward_pass(self, inputs):
+    def forward_pass(self, inputs, training):
         self.inputs = inputs
         # normalize edilmemiş olasılıklar
         exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
@@ -39,7 +39,7 @@ class Softmax():
         return np.argmax(outputs, axis=1)
             
 class Sigmoid():
-    def forward_pass(self, inputs):
+    def forward_pass(self, inputs, training):
         self.inputs = inputs
         self.output = 1 / (1 + np.exp(-inputs))
         
@@ -51,7 +51,7 @@ class Sigmoid():
         
         
 class Linear():
-    def forward_pass(self, inputs):
+    def forward_pass(self, inputs, training):
         self.inputs = inputs
         self.output = inputs
         

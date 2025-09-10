@@ -24,9 +24,12 @@ class Loss():
     def remember_trainable_layers(self, trainable_layers):
         self.trainable_layers = trainable_layers
         
-    def calculate(self, output, y):
+    def calculate(self, output, y, *, include_regularization=False):
         sample_loss = self.forward_pass(output, y)
         data_loss = np.mean(sample_loss)
+        
+        if not include_regularization:
+            return data_loss
         
         return data_loss, self.regularization_loss()
     
@@ -76,15 +79,6 @@ class BinaryCrossEntropy(Loss):
         self.dinputs = self.dinputs / samples 
                 
 class ActivationSoftmaxCategoricalCrossEntropy():
-    def __init__(self):
-        self.activation = Softmax()
-        self.loss = CategoricalCrossEntropy()
-        
-    def forward_pass(self, inputs, y_true):
-        self.activation.forward_pass(inputs)
-        self.output = self.activation.output
-        return self.loss.calculate(self.output, y_true)
-    
     def backward_pass(self, dvalues, y_true):
         samples = len(dvalues)
         # eğer etiketler one-hot encode ise ayrık değerlere dönüştür

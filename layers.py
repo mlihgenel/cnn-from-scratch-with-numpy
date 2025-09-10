@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Input():
-    def forward_pass(self, inputs):
+    def forward_pass(self, inputs, training):
         self.output = inputs
         
 class Dense():
@@ -18,7 +18,7 @@ class Dense():
         self.bias_regularizer_l2 = bias_regularizer_l2
         
     # forward pass 
-    def forward_pass(self, inputs):
+    def forward_pass(self, inputs, training):
         self.inputs = inputs
         self.output = np.dot(inputs, self.weights) + self.biases
         
