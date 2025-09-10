@@ -1,5 +1,10 @@
 import numpy as np 
 
+
+class Input():
+    def forward_pass(self, inputs):
+        self.output = inputs
+        
 class Dense():
     def __init__(self, n_inputs, n_neurons,
                  weight_regularizer_l1=0, weight_regularizer_l2=0,
@@ -59,3 +64,4 @@ class Dropout():
         
     def backward_pass(self, dvalues):
         self.dinputs = dvalues * self.binary_mask
+        
