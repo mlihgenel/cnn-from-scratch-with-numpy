@@ -36,6 +36,6 @@ class Accuracy_Categorical(Accuracy):
     def compare(self, predictions, y):
         if len(y.shape) == 2:
             y = np.argmax(y, axis=1)
-        return y
+        return predictions == y
     
     

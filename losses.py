@@ -19,7 +19,7 @@ class Loss():
             if layer.bias_regularizer_l2 > 0:
                 regularization_loss += layer.bias_regularizer_l2 * np.sum(layer.biases * layer.biases)
                 
-            return regularization_loss 
+        return regularization_loss 
     
     def remember_trainable_layers(self, trainable_layers):
         self.trainable_layers = trainable_layers
@@ -49,7 +49,7 @@ class Loss():
     
 class CategoricalCrossEntropy(Loss):
     def forward_pass(self, y_pred, y_true):
-        samples = len(y_pred)
+        samples = y_pred.shape[0]
         
         y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
         
