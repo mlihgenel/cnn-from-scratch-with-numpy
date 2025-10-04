@@ -16,6 +16,13 @@ class Dense():
         self.weight_regularizer_l2 = weight_regularizer_l2
         self.bias_regularizer_l1 = bias_regularizer_l1
         self.bias_regularizer_l2 = bias_regularizer_l2
+     
+    def get_parameters(self):
+        return self.weights, self.biases
+    
+    def set_parameters(self, weights, biases):
+        self.weights = weights
+        self.biases = biases 
         
     # forward pass 
     def forward_pass(self, inputs, training):
