@@ -214,3 +214,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+fashion_mnist_images/
+fashion_mnist_images.zip 
+
