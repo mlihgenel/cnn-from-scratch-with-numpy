@@ -6,11 +6,8 @@ import numpy as np
 import sys
 import os
 
-# Add src to path for imports
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-from core.layers import Dense, Dropout, Input
-from core.activations import ReLu
+from src.core.layers import Dense, Dropout, Input
+from src.core.activations import ReLu
 
 
 def test_dense_layer():
