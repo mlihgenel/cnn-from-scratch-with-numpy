@@ -1,6 +1,6 @@
 import numpy as np
 
-class ReLu():
+class ReLU():
     def forward_pass(self, inputs, training):
         self.inputs = inputs
         self.output = np.maximum(0, inputs)

@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.model import Model 
 from src.core.layers import Dense, Dropout
-from src.core.activations import ReLu, Linear, Sigmoid, Softmax
+from src.core.activations import ReLU, Linear, Sigmoid, Softmax
 from src.core.losses import CategoricalCrossEntropy, MeanSquaredError as MSE
 from src.core.losses import BinaryCrossEntropy
 from src.utils.accuracy import Accuracy_Regression, Accuracy_Categorical
@@ -30,9 +30,9 @@ X_test = X_test.reshape(X_test.shape[0], -1).astype(np.float32) / 255
 model = Model()
 
 model.add(Dense(X.shape[1], 128))
-model.add(ReLu())
+model.add(ReLU())
 model.add(Dense(128, 128))
-model.add(ReLu())
+model.add(ReLU())
 model.add(Dense(128, 10))
 model.add(Softmax())
 
