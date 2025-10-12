@@ -42,7 +42,7 @@ cnn-from-scratch-numpy/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/mlihgenel/cnn-from-scratch-with-numpy
 cd cnn-from-scratch-numpy
 ```
 

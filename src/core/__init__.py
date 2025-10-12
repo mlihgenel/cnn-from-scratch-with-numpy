@@ -9,7 +9,7 @@ This package contains the fundamental building blocks of neural networks:
 """
 
 from .layers import Dense, Dropout, Input
-from .activations import ReLu, Softmax, Sigmoid, Linear
+from .activations import ReLU, Softmax, Sigmoid, Linear
 from .losses import (
     Loss, CategoricalCrossEntropy, BinaryCrossEntropy, 
     MeanSquaredError, MeanAbsoluteError, ActivationSoftmaxCategoricalCrossEntropy
@@ -20,7 +20,7 @@ __all__ = [
     # Layers
     'Dense', 'Dropout', 'Input',
     # Activations
-    'ReLu', 'Softmax', 'Sigmoid', 'Linear',
+    'ReLU', 'Softmax', 'Sigmoid', 'Linear',
     # Loss functions
     'Loss', 'CategoricalCrossEntropy', 'BinaryCrossEntropy', 
     'MeanSquaredError', 'MeanAbsoluteError', 'ActivationSoftmaxCategoricalCrossEntropy',

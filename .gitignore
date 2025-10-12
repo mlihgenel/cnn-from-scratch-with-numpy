@@ -134,7 +134,7 @@ dmypy.json
 *.pickle
 
 # Data files (except for small sample datasets)
-data/*/
+data
 !data/sample/
 !data/fashion_mnist_images/
 
@@ -153,4 +153,5 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
+
 
