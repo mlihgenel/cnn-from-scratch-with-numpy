@@ -98,82 +98,151 @@ class Conv():
         self.weight_regularizer_l2 = weight_regularizer_l2
         self.bias_regularizer_l1 = bias_regularizer_l1
         self.bias_regularizer_l2 = bias_regularizer_l2
+ 
+    def im2col_batch(self, inputs, kernel_size, stride, padding):
+        batch, C, H, W = inputs.shape
+        k = kernel_size
+
+        # Padding
+        if padding > 0:
+            inputs_padded = np.pad(
+                inputs,
+                ((0,0), (0,0), (padding,padding), (padding,padding)),
+                mode="constant"
+            )
+            """
+            input'un boyutu (batch, C, H, W) olduğu için padding eklemek istediğimizde;
+            batch ve channel' e ekleme yapmıyoruz sadece görüntünün x ve y eksenine (yani sağ-sol, üst-alt) padding uygularız.
+            
+            """
+        else:
+            inputs_padded = inputs
+
+        H_p, W_p = inputs_padded.shape[2:]
+        out_h = (H_p - k) // stride + 1
+        out_w = (W_p - k) // stride + 1
+        """
+        convolition işleminden sonraki yükseklik ve genişlik 
+        heigth, weight = (28,28) ise padding = 1 durumunda 
+        H_p, W_p = (30,30) olur. 
+        kernel_size = 3 ise, stride = 1 durumunda; 
+        out_h, out_w = (28,28) olur.
+        """
+
+        cols = np.zeros((batch, C * k * k, out_h * out_w))
+        """
+        cols adında sıfırlar oluşan bir matris oluşturuyoruz 
+        3 boyutlu matrisin ilk boyutu batchleri tutar
+        C*k*k -> patchlerin flatten edilmiş halleridir. eğer tek kanallı olsaydı k=3 durumunda 9 olacaktı 
+        out_h * out_w -> patch sayısını tutar 
+        """
+
+        # patchleri ayarlama kısmı 
+        idx = 0
+        for y in range(out_h):
+            for x in range(out_w):
+                patch = inputs_padded[:, :, y*stride:y*stride+k, x*stride:x*stride+k]
+                cols[:, :, idx] = patch.reshape(batch, -1)
+                idx += 1
+
+        """
+        görüntünün hem x ekseninde hem de y ekseninde gezinerek eğer padding işlemi varsa stride(atlama) kadar 
+        ilerleyerek patchler oluşturulur
+        indexe göre patchler flatten edilerek matirse yerleştirilir 
         
+        cols[batch, patchteki eleman sayısı, patch sayısı] olacak şekilde olur 
+        """
+        return cols, out_h, out_w
+    
+    # im2col fonksiyonunun tersini yapar 
+    def col2im(self, cols, input_shape, k, stride, padding, out_h, out_w):
+        batch, C, H, W = input_shape
+        H_p = H + 2*padding
+        W_p = W + 2*padding
+        
+        inputs_padded = np.zeros((batch, C, H_p, W_p))
+        
+        idx = 0
+        for y in range(out_h):
+            for x in range(out_w):
+                patch = cols[:, :, idx].reshape(batch, C, k, k)
+                inputs_padded[:, :, y*stride:y*stride+k, x*stride:x*stride+k] += patch
+                idx += 1
+        
+        if padding > 0:
+            return inputs_padded[:, :, padding:-padding, padding:-padding]
+        return inputs_padded
+
     def forward_pass(self, inputs, training=True):
         self.inputs = inputs
-        
-        # Batch dimension'ını kontrol et
-        if len(inputs.shape) == 4:  # (batch_size, channels, height, width)
-            batch_size = inputs.shape[0]
-            self.output = np.zeros((batch_size, *self.output_shape))
-        else:  # (channels, height, width)
-            batch_size = 1
-            self.output = np.zeros(self.output_shape)
-            inputs = inputs[np.newaxis, ...]  # Batch dimension ekle
-        
-        # Her batch için işlem yap
-        for b in range(batch_size):
-            current_input = inputs[b]
-            
-            if self.padding > 0:
-                self.input_padded = np.pad(
-                    current_input, 
-                    ((0,0), (self.padding, self.padding), (self.padding, self.padding)),
-                    mode='constant'
-                )
-            else:
-                self.input_padded = current_input
-                
-            for f in range(self.filters):
-                for c in range(self.input_depth):
-                    # forward as stride steps
-                    for y in range(0, self.output_height):
-                        for x in range(0, self.output_width):
-                            y_start = y * self.stride
-                            x_start = x * self.stride 
-                            region = self.input_padded[c, y_start:y_start + self.kernel_size, x_start:x_start + self.kernel_size]
-                            if batch_size == 1:
-                                self.output[f, y, x] += np.sum(region * self.weights[f, c])
-                            else:
-                                self.output[b, f, y, x] += np.sum(region * self.weights[f, c])
-                
-                if batch_size == 1:
-                    self.output[f] += self.biases[f]
-                else:
-                    self.output[b, f] += self.biases[f]
-        
-        return self.output 
+        batch, C, H, W = inputs.shape
+
+        # im2col
+        X_col, out_h, out_w = self.im2col_batch(
+            inputs,
+            kernel_size=self.kernel_size,
+            stride=self.stride,
+            padding=self.padding
+        )
+        self.X_col = X_col
+        self.out_h = out_h
+        self.out_w = out_w
+
+        # Filtreleri reshape etme (filters, C*k*k)
+        W_col = self.weights.reshape(self.filters, -1)
+
+        # Matmul (en hızlı yöntem)
+        # out: (batch, filters, out_h*out_w)
+        out = np.einsum('fc,bco->bfo', W_col, X_col)
+
+        # Bias ekleme 
+        out += self.biases.reshape(1, self.filters, 1)
+
+        # Reshape: (batch, filters, out_h, out_w)
+        out = out.reshape(batch, self.filters, out_h, out_w)
+
+        self.output = out
+        return self.output
     
     def backward_pass(self, dvalues):
-        self.dweights = np.zeros(self.kernels_shape)
+        batch = dvalues.shape[0]
+        F = self.filters
+        C = self.input_depth
+        k = self.kernel_size
         
-        # Batch dimension'ını kontrol et
-        if len(dvalues.shape) == 4:  # (batch_size, filters, height, width)
-            batch_size = dvalues.shape[0]
-            self.dinputs = np.zeros((batch_size, *self.input_shape))
-        else:  # (filters, height, width)
-            batch_size = 1
-            self.dinputs = np.zeros(self.input_shape)
-            dvalues = dvalues[np.newaxis, ...]  # Batch dimension ekle
+        # dOut_col shape: (batch, F, out_h*out_w)
+        dOut_col = dvalues.reshape(batch, F, -1)
         
-        # Her batch için işlem yap
-        for b in range(batch_size):
-            current_dvalues = dvalues[b]
-            current_inputs = self.inputs[b] if batch_size > 1 else self.inputs
-            
-            for f in range(self.filters):
-                for c in range(self.input_depth):
-                    self.dweights[f, c] += signal.correlate2d(current_inputs[c], current_dvalues[f], mode='valid')
-                    if batch_size == 1:
-                        self.dinputs[c] += signal.convolve2d(current_dvalues[f], np.flip(self.weights[f, c]), mode='full')
-                    else:
-                        self.dinputs[b, c] += signal.convolve2d(current_dvalues[f], np.flip(self.weights[f, c]), mode='full')
+        # W_col shape: (F, C*k*k)
+        W_col = self.weights.reshape(F, -1)
         
-        # Batch size'a göre bias gradient'ını hesapla
-        if batch_size == 1:
-            self.dbiases = np.sum(dvalues, axis=(1, 2))
-        else:
-            self.dbiases = np.sum(np.sum(dvalues, axis=(2, 3)), axis=0)
+        # X_col was saved during forward
+        X_col = self.X_col  # (batch, C*k*k, out_h*out_w)
+        
+        # dW
+        dW_col = np.zeros_like(W_col)
+        for b in range(batch):
+            dW_col += dOut_col[b] @ X_col[b].T
+        self.dweights = dW_col.reshape(self.weights.shape)
+        
+        # dbiases
+        self.dbiases = np.sum(dvalues, axis=(0,2,3))
+        
+        # dX
+        dX_col = np.zeros_like(X_col)
+        WT_col = W_col.T  # (C*k*k, F)
+        for b in range(batch):
+            dX_col[b] = WT_col @ dOut_col[b]
+        
+        self.dinputs = self.col2im(
+            dX_col,
+            self.inputs.shape,
+            k,
+            self.stride,
+            self.padding,
+            self.out_h,
+            self.out_w
+        )
         
     def get_parameters(self):
         return self.weights, self.biases
