@@ -206,7 +206,6 @@ class Conv():
     def backward_pass(self, dvalues):
         batch = dvalues.shape[0]
         F = self.filters
-        C = self.input_depth
         k = self.kernel_size
         
         # dOut_col shape: (batch, F, out_h*out_w)
@@ -218,20 +217,31 @@ class Conv():
         # X_col was saved during forward
         X_col = self.X_col  # (batch, C*k*k, out_h*out_w)
         
-        # dW
-        dW_col = np.zeros_like(W_col)
-        for b in range(batch):
-            dW_col += dOut_col[b] @ X_col[b].T
+        # dW: batched matmul then sum over batch
+        dW_col = np.matmul(dOut_col, np.transpose(X_col, (0, 2, 1))).sum(axis=0)
         self.dweights = dW_col.reshape(self.weights.shape)
         
         # dbiases
         self.dbiases = np.sum(dvalues, axis=(0,2,3))
+
+        # Regularization gradients for conv parameters
+        if self.weight_regularizer_l1 > 0:
+            dL1 = np.ones_like(self.weights)
+            dL1[self.weights < 0] = -1
+            self.dweights += self.weight_regularizer_l1 * dL1
+        if self.weight_regularizer_l2 > 0:
+            self.dweights += 2 * self.weight_regularizer_l2 * self.weights
+
+        if self.bias_regularizer_l1 > 0:
+            dL1 = np.ones_like(self.biases)
+            dL1[self.biases < 0] = -1
+            self.dbiases += self.bias_regularizer_l1 * dL1
+        if self.bias_regularizer_l2 > 0:
+            self.dbiases += 2 * self.bias_regularizer_l2 * self.biases
         
         # dX
-        dX_col = np.zeros_like(X_col)
         WT_col = W_col.T  # (C*k*k, F)
-        for b in range(batch):
-            dX_col[b] = WT_col @ dOut_col[b]
+        dX_col = np.matmul(WT_col[None, :, :], dOut_col)
         
         self.dinputs = self.col2im(
             dX_col,
@@ -249,7 +259,65 @@ class Conv():
     def set_parameters(self, weights, biases):
         self.weights = weights
         self.biases = biases 
-        
+
+class MaxPool2D:
+    def __init__(self, pool_size=2, stride=None):
+        if isinstance(pool_size, int):
+            self.pool_h = pool_size
+            self.pool_w = pool_size
+        else:
+            self.pool_h, self.pool_w = pool_size
+
+        if stride is None:
+            self.stride = self.pool_h
+        else:
+            self.stride = stride
+
+    def forward_pass(self, inputs, training=True):
+        if inputs.ndim != 4:
+            raise ValueError("MaxPool2D expects 4D input (batch, channels, height, width).")
+
+        self.inputs = inputs
+        batch, channels, height, width = inputs.shape
+
+        self.out_h = (height - self.pool_h) // self.stride + 1
+        self.out_w = (width - self.pool_w) // self.stride + 1
+
+        self.output = np.zeros((batch, channels, self.out_h, self.out_w), dtype=inputs.dtype)
+        self.max_indices = np.zeros((batch, channels, self.out_h, self.out_w), dtype=np.int64)
+
+        for y in range(self.out_h):
+            for x in range(self.out_w):
+                y0 = y * self.stride
+                x0 = x * self.stride
+                window = inputs[:, :, y0:y0 + self.pool_h, x0:x0 + self.pool_w]
+                flat_window = window.reshape(batch, channels, -1)
+
+                self.output[:, :, y, x] = np.max(flat_window, axis=-1)
+                self.max_indices[:, :, y, x] = np.argmax(flat_window, axis=-1)
+
+    def backward_pass(self, dvalues):
+        batch, channels, _, _ = self.inputs.shape
+        self.dinputs = np.zeros_like(self.inputs)
+
+        batch_idx = np.arange(batch)[:, None]
+        channel_idx = np.arange(channels)[None, :]
+
+        for y in range(self.out_h):
+            for x in range(self.out_w):
+                y0 = y * self.stride
+                x0 = x * self.stride
+
+                max_idx = self.max_indices[:, :, y, x]
+                max_y = max_idx // self.pool_w
+                max_x = max_idx % self.pool_w
+
+                np.add.at(
+                    self.dinputs,
+                    (batch_idx, channel_idx, y0 + max_y, x0 + max_x),
+                    dvalues[:, :, y, x]
+                )
+
 class Flatten:
     def forward_pass(self, inputs, training=True):
         self.inputs = inputs

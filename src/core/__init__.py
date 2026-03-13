@@ -2,13 +2,13 @@
 Core neural network components.
 
 This package contains the fundamental building blocks of neural networks:
-- Layers (Dense, Dropout, Input)
+- Layers (Dense, Dropout, Conv, MaxPool2D, Flatten, Input)
 - Activation functions (ReLU, Softmax, Sigmoid, Linear)
 - Loss functions (CategoricalCrossEntropy, BinaryCrossEntropy, MeanSquaredError, etc.)
 - Optimizers (SGD, Adam, AdaGrad, RMSProp)
 """
 
-from .layers import Dense, Dropout, Input
+from .layers import Dense, Dropout, Conv, MaxPool2D, Flatten, Input
 from .activations import ReLU, Softmax, Sigmoid, Linear
 from .losses import (
     Loss, CategoricalCrossEntropy, BinaryCrossEntropy, 
@@ -18,7 +18,7 @@ from .optimizers import SGD, Adam, AdaGrad, RMSProb
 
 __all__ = [
     # Layers
-    'Dense', 'Dropout', 'Input',
+    'Dense', 'Dropout', 'Conv', 'MaxPool2D', 'Flatten', 'Input',
     # Activations
     'ReLU', 'Softmax', 'Sigmoid', 'Linear',
     # Loss functions

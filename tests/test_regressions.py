@@ -1,7 +1,7 @@
 import numpy as np
 
 from src.core.activations import Linear, Softmax
-from src.core.layers import Dense, Dropout, Flatten
+from src.core.layers import Conv, Dense, Dropout, Flatten
 from src.core.losses import BinaryCrossEntropy, CategoricalCrossEntropy, MeanAbsoluteError, MeanSquaredError
 from src.core.optimizers import SGD
 from src.model import Model
@@ -98,3 +98,63 @@ def test_finalize_sets_softmax_classifier_output_for_other_loss_types():
     model.finalize()
 
     assert model.softmax_classifier_output is None
+
+
+def test_conv_backward_vectorized_matches_reference_and_regularization():
+    np.random.seed(42)
+    conv = Conv(
+        input_shape=(2, 5, 5),
+        kernel_size=3,
+        filters=3,
+        stride=1,
+        padding=1,
+        weight_regularizer_l1=0.1,
+        weight_regularizer_l2=0.05,
+        bias_regularizer_l1=0.2,
+        bias_regularizer_l2=0.03,
+    )
+
+    inputs = np.random.randn(4, 2, 5, 5)
+    dvalues = np.random.randn(4, 3, 5, 5)
+    conv.forward_pass(inputs, training=True)
+    conv.backward_pass(dvalues)
+
+    dOut_col = dvalues.reshape(4, 3, -1)
+    W_col = conv.weights.reshape(3, -1)
+    X_col = conv.X_col
+
+    # Reference dW using explicit loops
+    ref_dW_col = np.zeros_like(W_col)
+    for b in range(4):
+        ref_dW_col += dOut_col[b] @ X_col[b].T
+    ref_dweights = ref_dW_col.reshape(conv.weights.shape)
+
+    dL1_w = np.ones_like(conv.weights)
+    dL1_w[conv.weights < 0] = -1
+    ref_dweights += 0.1 * dL1_w
+    ref_dweights += 2 * 0.05 * conv.weights
+
+    ref_dbiases = np.sum(dvalues, axis=(0, 2, 3))
+    dL1_b = np.ones_like(conv.biases)
+    dL1_b[conv.biases < 0] = -1
+    ref_dbiases += 0.2 * dL1_b
+    ref_dbiases += 2 * 0.03 * conv.biases
+
+    # Reference dX using explicit loop
+    ref_dX_col = np.zeros_like(X_col)
+    WT_col = W_col.T
+    for b in range(4):
+        ref_dX_col[b] = WT_col @ dOut_col[b]
+    ref_dinputs = conv.col2im(
+        ref_dX_col,
+        inputs.shape,
+        conv.kernel_size,
+        conv.stride,
+        conv.padding,
+        conv.out_h,
+        conv.out_w,
+    )
+
+    assert np.allclose(conv.dweights, ref_dweights)
+    assert np.allclose(conv.dbiases, ref_dbiases)
+    assert np.allclose(conv.dinputs, ref_dinputs)
