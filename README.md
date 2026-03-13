@@ -5,7 +5,7 @@ A complete implementation of neural networks using only NumPy, designed for educ
 ## 🚀 Features
 
 - **Complete Neural Network Implementation**: Built from scratch using only NumPy
-- **Multiple Layer Types**: Dense layers, Dropout regularization
+- **Multiple Layer Types**: Dense, Conv2D, MaxPool2D, Flatten, Dropout
 - **Various Activation Functions**: ReLU, Softmax, Sigmoid, Linear
 - **Multiple Loss Functions**: Categorical Cross-Entropy, Binary Cross-Entropy, Mean Squared Error, Mean Absolute Error
 - **Advanced Optimizers**: SGD, Adam, AdaGrad, RMSProp
@@ -18,7 +18,7 @@ A complete implementation of neural networks using only NumPy, designed for educ
 cnn-from-scratch-numpy/
 ├── src/                          # Source code
 │   ├── core/                     # Core neural network components
-│   │   ├── layers.py            # Layer implementations (Dense, Dropout, Input)
+│   │   ├── layers.py            # Layer implementations (Dense, Conv, MaxPool2D, Flatten, Dropout, Input)
 │   │   ├── activations.py       # Activation functions (ReLU, Softmax, etc.)
 │   │   ├── losses.py            # Loss functions
 │   │   └── optimizers.py        # Optimization algorithms
@@ -67,7 +67,7 @@ python main.py
 ```python
 from src.model import Model
 from src.core.layers import Dense, Dropout
-from src.core.activations import ReLu, Softmax
+from src.core.activations import ReLU, Softmax
 from src.core.losses import CategoricalCrossEntropy
 from src.core.optimizers import Adam
 from src.utils.accuracy import Accuracy_Categorical
@@ -77,7 +77,7 @@ model = Model()
 
 # Add layers
 model.add(Dense(784, 128))
-model.add(ReLu())
+model.add(ReLU())
 model.add(Dropout(0.2))
 model.add(Dense(128, 10))
 model.add(Softmax())
@@ -98,11 +98,14 @@ model.train(X_train, y_train, validation_data=(X_val, y_val), epochs=10)
 
 #### Layers
 - `Dense`: Fully connected layer with optional L1/L2 regularization
+- `Conv`: 2D convolution layer for image-like inputs (N, C, H, W)
+- `MaxPool2D`: 2D max pooling layer
+- `Flatten`: Flattens features before dense layers
 - `Dropout`: Regularization layer that randomly sets inputs to zero
 - `Input`: Input layer placeholder
 
 #### Activation Functions
-- `ReLu`: Rectified Linear Unit activation
+- `ReLU`: Rectified Linear Unit activation
 - `Softmax`: Softmax activation for multi-class classification
 - `Sigmoid`: Sigmoid activation for binary classification
 - `Linear`: Linear (identity) activation

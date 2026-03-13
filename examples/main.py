@@ -18,7 +18,8 @@ np.set_printoptions(linewidth=200)
 
 # Data preproccessing 
 # --- Data preparation ---
-X, y, X_test, y_test = create_data_mnist('../data/fashion_mnist_images')
+data_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'fashion_mnist_images')
+X, y, X_test, y_test = create_data_mnist(data_dir)
 
 keys = np.array(range(X.shape[0]))
 np.random.shuffle(keys)
@@ -35,23 +36,20 @@ model = Model()
 model.add(Conv((1, 28, 28), kernel_size=3, filters=3))
 model.add(ReLU())
 model.add(Flatten())
-model.add(Dense(3 * 26 * 26, 128))
+model.add(Dense(3 * 26 * 26, 128)) #3x3'lük kernel (28x28)'i (26*26)'lık matrise dönüştürür onu da filtre sayısı ile çarparız
 model.add(ReLU())
 model.add(Dense(128, 128))
 model.add(ReLU())
 model.add(Dense(128, 10))
 model.add(Softmax())
 
-# --- Compile ---
 model.compile(
     loss=CategoricalCrossEntropy(),
     optimizer=Adam(decay=1e-3),
     accuracy=Accuracy_Categorical()
 )
-
 model.finalize()
 
-# --- Train ---
 model.train(
     X, y,
     validation_data=(X_test, y_test),
