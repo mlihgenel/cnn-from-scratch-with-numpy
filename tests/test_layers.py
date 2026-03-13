@@ -7,7 +7,7 @@ import sys
 import os
 
 from src.core.layers import Dense, Dropout, Input
-from src.core.activations import ReLu
+from src.core.activations import ReLU
 
 
 def test_dense_layer():
@@ -48,7 +48,7 @@ def test_dropout_layer():
 
 def test_relu_activation():
     """Test ReLU activation function."""
-    relu = ReLu()
+    relu = ReLU()
     inputs = np.array([[-2, -1, 0, 1, 2]])
     
     relu.forward_pass(inputs, training=True)

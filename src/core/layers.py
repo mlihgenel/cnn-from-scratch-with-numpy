@@ -1,5 +1,4 @@
 import numpy as np 
-from scipy import signal
 
 class Input():
     def forward_pass(self, inputs, training):
@@ -49,7 +48,7 @@ class Dense():
         if self.bias_regularizer_l1 > 0:
             dL1 = np.ones_like(self.biases)
             dL1[self.biases < 0] = -1
-            self.biases += self.bias_regularizer_l1 * dL1 
+            self.dbiases += self.bias_regularizer_l1 * dL1 
         # Biasların L2 regularizasyonu 
         if self.bias_regularizer_l2 > 0:
             self.dbiases += 2 * self.bias_regularizer_l2 * self.biases
@@ -254,7 +253,10 @@ class Conv():
 class Flatten:
     def forward_pass(self, inputs, training=True):
         self.inputs = inputs
-        self.output = inputs.reshape(inputs.shape[0], -1) if inputs.ndim == 4 else inputs.reshape(1, -1)
+        if inputs.ndim == 1:
+            self.output = inputs.reshape(1, -1)
+        else:
+            self.output = inputs.reshape(inputs.shape[0], -1)
     
     def backward_pass(self, dvalues):
         self.dinputs = dvalues.reshape(self.inputs.shape)

@@ -48,6 +48,7 @@ class Model():
         layer_count = len(self.layers)
         
         self.trainable_layers = []
+        self.softmax_classifier_output = None
         
         for i in range(layer_count):
             # eğer ilk katman ise önceki katman girdi katmanıdır
@@ -167,7 +168,7 @@ class Model():
                 batch_X = X_val[step*batch_size:(step+1)*batch_size]
                 batch_y = y_val[step*batch_size:(step+1)*batch_size]
                 
-            output = self.forward_pass(batch_X, training=True)
+            output = self.forward_pass(batch_X, training=False)
             self.loss.calculate(output, batch_y)
             
             predictions = self.output_layer_activation.predictions(output)

@@ -79,7 +79,7 @@ class BinaryCrossEntropy(Loss):
         y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
         
         sample_losses = -((y_true * np.log(y_pred_clipped)) + ((1 - y_true) * np.log(1 - y_pred_clipped)))
-        sample_losses = np.mean(sample_losses)
+        sample_losses = np.mean(sample_losses, axis=-1)
         
         return sample_losses
     
@@ -90,6 +90,7 @@ class BinaryCrossEntropy(Loss):
         clipped_values = np.clip(dvalues, 1e-7, 1 - 1e-7)
         self.dinputs = -((y_true / clipped_values) - ((1 - y_true) / (1 - clipped_values)))
         
+        self.dinputs = self.dinputs / outputs
         self.dinputs = self.dinputs / samples 
                 
 class ActivationSoftmaxCategoricalCrossEntropy():
@@ -123,7 +124,7 @@ class MeanAbsoluteError(Loss):
         sample_loss = np.mean(np.abs(y_pred - y_true), axis=-1)
         return sample_loss
     
-    def backward_loss(self, dvalues, y_true):
+    def backward_pass(self, dvalues, y_true):
         samples = len(dvalues)
         outputs = len(dvalues[0])
         
